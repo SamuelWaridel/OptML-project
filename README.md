@@ -1,4 +1,4 @@
 # OptML-project
 
-Authors : Tallulah Rytz, Timothée Chaadi Coester, Samuel Waridel
+Contributors : Tallulah Rytz, Timothée Chaadi Coester, Samuel Waridel
 

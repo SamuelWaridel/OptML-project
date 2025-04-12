@@ -10,6 +10,7 @@ import torchvision
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
 from sklearn.metrics import accuracy_score, recall_score, f1_score
 from IPython.display import clear_output
@@ -91,25 +92,45 @@ def get_resnet18_cifar():
     model.maxpool = nn.Identity()  # Remove the first maxpool to preserve spatial resolution
     return model
 
-def get_data_loaders(batch_size=64):
+def get_data_loaders(batch_size=64, valid_size = 0.1, random_seed = 42):
     '''Get CIFAR-10 data loaders for training and testing.
     The data is normalized using the CIFAR-10 mean and std.
-    The training data is shuffled.
-    The test data is not shuffled.
+    The training data is split into training and validation sets.
+    
+    Parameters:
+        batch_size (int): Batch size for data loaders.
+        valid_size (float): Proportion of training data to use for validation.
+        random_seed (int): Seed for random number generation.
+    
+    Returns:
+        train_loader (DataLoader): DataLoader for training data.
+        valid_loader (DataLoader): DataLoader for validation data.
+        test_loader (DataLoader): DataLoader for testing data.
     '''
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), 
-                             (0.2470, 0.2435, 0.2616))  # CIFAR-10 mean and std
+                            (0.2470, 0.2435, 0.2616))  # CIFAR-10 mean and std
     ])
 
     train_dataset = datasets.CIFAR10(root="./data", train=True, download=True, transform=transform)
     test_dataset = datasets.CIFAR10(root="./data", train=False, download=True, transform=transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    split = int(np.floor(valid_size * len(train_dataset)))
+    indices = list(range(len(train_dataset)))
+    train_idx, valid_idx = indices[split:], indices[split:] 
+
+    generator = torch.Generator() # Create a generator for reproducibility
+    generator.manual_seed(random_seed) # Set the seed for the generator
+
+    train_sampler = SubsetRandomSampler(train_idx, generator)
+    valid_sampler = SubsetRandomSampler(valid_idx, generator)
+
+    train_loader = DataLoader(train_dataset, sampler = train_sampler, batch_size=batch_size)
+    valid_loader = DataLoader(train_dataset, sampler = valid_sampler, batch_size=batch_size)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-    return train_loader, test_loader
+    return train_loader, valid_loader, test_loader
 
 def evaluate_model(model, dataloader, device):
     '''Evaluate the model on the test data.
@@ -161,8 +182,8 @@ def train(model, train_loader, test_loader, optimizer, criterion, device, num_ep
         acc, rec, f1 = evaluate_model(model, test_loader, device)
         print(f"Epoch {epoch+1}/{num_epochs} - Accuracy: {acc:.4f}, Recall: {rec:.4f}, F1: {f1:.4f}")
         
-def train_and_return_evaluation_SGD(model_fn, lr, momentum, train_loader, test_loader, device, epochs=100, eval_interval=10):
-    '''Train the model using SGD optimizer and return evaluation metrics.
+def train_and_return_evaluation_SGD(model_fn, lr, momentum, train_loader, valid_loader, test_loader, device, epochs=100, eval_interval=10):
+    '''Train the model using SGD optimizer and return evaluation metrics on the validation set.
     The model is trained for a specified number of epochs.
     The accuracy, recall, and F1 score are printed after each evaluation interval.
     
@@ -171,12 +192,14 @@ def train_and_return_evaluation_SGD(model_fn, lr, momentum, train_loader, test_l
         lr: Learning rate for the optimizer.
         momentum: Momentum for the optimizer.
         train_loader: DataLoader for training data.
+        valid_loader: DataLoader for validation data.
         test_loader: DataLoader for test data.
         device: Device to run the model on (CPU or GPU).
         epochs: Number of epochs to train the model.
         eval_interval: Interval for evaluating the model.
     Returns:
         scores: List of tuples containing epoch, accuracy, recall, and F1 score.
+        model: Trained model.
     '''
     clear_output(wait=True)
 
@@ -190,11 +213,16 @@ def train_and_return_evaluation_SGD(model_fn, lr, momentum, train_loader, test_l
     for epoch in range(1, epochs + 1):
         train_one_epoch(model, train_loader, optimizer, criterion, device)
         if epoch % eval_interval == 0:
-            acc, rec, f1 = evaluate_model(model, test_loader, device)
+            acc, rec, f1 = evaluate_model(model, valid_loader, device)
             print(f"Epoch {epoch} | Acc={acc:.4f} | Recall={rec:.4f} | F1={f1:.4f}")
             scores.append((epoch, acc, rec, f1))
+            
+    # Evaluate on the test set after training
+    acc, rec, f1 = evaluate_model(model, test_loader, device)
+    scores.append(("Test", acc, rec, f1))
+    print(f"\nTest Set Evaluation: Acc={acc:.4f} | Recall={rec:.4f} | F1={f1:.4f}")
 
-    return scores
+    return scores, model
 
 def set_seed(seed=42):
     '''Set the seed for random number generation.
@@ -210,7 +238,7 @@ def set_seed(seed=42):
     torch.backends.cudnn.deterministic = True  # Makes results reproducible
     torch.backends.cudnn.benchmark = False     # Slower, but deterministic
     
-def train_and_return_evaluation_Adam(model_fn, lr, betas, train_loader, test_loader, device, epochs=100, eval_interval=10):
+def train_and_return_evaluation_Adam(model_fn, lr, betas, train_loader, valid_loader, test_loader, device, epochs=100, eval_interval=10):
     '''Train the model using SGD optimizer and return evaluation metrics.
     The model is trained for a specified number of epochs.
     The accuracy, recall, and F1 score are printed after each evaluation interval.
@@ -220,12 +248,14 @@ def train_and_return_evaluation_Adam(model_fn, lr, betas, train_loader, test_loa
         lr: Learning rate for the optimizer.
         betas: Betas for the optimizer.
         train_loader: DataLoader for training data.
+        valid_loader: DataLoader for validation data.
         test_loader: DataLoader for test data.
         device: Device to run the model on (CPU or GPU).
         epochs: Number of epochs to train the model.
         eval_interval: Interval for evaluating the model.
     Returns:
         scores: List of tuples containing epoch, accuracy, recall, and F1 score.
+        model: Trained model.
     '''
     clear_output(wait=True)
 
@@ -239,8 +269,13 @@ def train_and_return_evaluation_Adam(model_fn, lr, betas, train_loader, test_loa
     for epoch in range(1, epochs + 1):
         train_one_epoch(model, train_loader, optimizer, criterion, device)
         if epoch % eval_interval == 0:
-            acc, rec, f1 = evaluate_model(model, test_loader, device)
+            acc, rec, f1 = evaluate_model(model, valid_loader, device)
             print(f"Epoch {epoch} | Acc={acc:.4f} | Recall={rec:.4f} | F1={f1:.4f}")
             scores.append((epoch, acc, rec, f1))
 
-    return scores
+    # Evaluate on the test set after training
+    acc, rec, f1 = evaluate_model(model, test_loader, device)
+    scores.append(("Test", acc, rec, f1))
+    print(f"\nTest Set Evaluation: Acc={acc:.4f} | Recall={rec:.4f} | F1={f1:.4f}")
+
+    return scores, model

@@ -248,7 +248,7 @@ def set_seed(seed=42):
     torch.backends.cudnn.deterministic = True  # Makes results reproducible
     torch.backends.cudnn.benchmark = False     # Slower, but deterministic
     
-def train_and_return_evaluation_Adam(model_fn, lr, betas, train_loader, valid_loader, test_loader, device, epochs=100, eval_interval=10):
+def train_and_return_evaluation_Adam(model_fn, lr, beta_1, beta_2, train_loader, valid_loader, test_loader, device, epochs=100, eval_interval=10):
     '''Train the model using SGD optimizer and return evaluation metrics.
     The model is trained for a specified number of epochs.
     The accuracy, recall, and F1 score are printed after each evaluation interval.
@@ -270,19 +270,19 @@ def train_and_return_evaluation_Adam(model_fn, lr, betas, train_loader, valid_lo
     clear_output(wait=True)
 
     model = model_fn().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=lr, betas = betas)
+    optimizer = optim.Adam(model.parameters(), lr=lr, betas=(beta_1, beta_2))
     criterion = nn.CrossEntropyLoss()
 
     scores = []
 
-    print(f"\n🔧 Training with Adam: lr={lr}, betas={betas}")
+    print(f"\n🔧 Training with Adam: lr={lr}, beta_1={beta_1}, beta_2={beta_2}")
     for epoch in range(1, epochs + 1):
         train_one_epoch(model, train_loader, optimizer, criterion, device)
         if epoch % eval_interval == 0:
             acc, rec, f1 = evaluate_model(model, valid_loader, device)
             print(f"Epoch {epoch} | Acc={acc:.4f} | Recall={rec:.4f} | F1={f1:.4f}")
             scores.append((epoch, acc, rec, f1))
-
+            
     # Evaluate on the test set after training
     acc, rec, f1 = evaluate_model(model, test_loader, device)
     scores.append(("Test", acc, rec, f1))

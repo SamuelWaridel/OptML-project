@@ -92,6 +92,12 @@ def get_resnet18_cifar():
     model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
     model.maxpool = nn.Identity()  # Remove the first maxpool to preserve spatial resolution
     return model
+    
+def get_densenet121():
+    model = models.densenet121(num_classes=10)
+    model.features.conv0 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+    model.features.pool0 = nn.Identity()
+    return model
 
 def get_data_loaders(batch_size=64, valid_size = 0.1, random_seed = 42):
     '''Get CIFAR-10 data loaders for training and testing.

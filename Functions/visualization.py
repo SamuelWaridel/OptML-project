@@ -60,3 +60,13 @@ def plot_F1_Adam_sns(df, hue=None, style=None, size=None, markers = False):
     plt.xticks(rotation=45)
     plt.grid()
     plt.show()
+    
+def plot_barplot(data, ylim =(0.75, 1.0)):
+    data['Beta 1 and Beta 2'] = list(zip(data['beta_1'], data['beta_2']))
+    sns.catplot(data=data[data['epoch'] == 'Test'], kind='bar', x='lr', y='f1', hue='Beta 1 and Beta 2')
+    plt.title("Test F1 Scores for Different Learning Rates and Betas")
+    plt.xlabel("Learning Rate")
+    plt.ylabel("F1 Score")
+    plt.ylim(ylim)
+    plt.grid()
+    plt.show()

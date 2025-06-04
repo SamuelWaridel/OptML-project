@@ -295,3 +295,11 @@ def train_and_return_evaluation_Adam(model_fn, lr, beta_1, beta_2, train_loader,
     print(f"\nTest Set Evaluation: Acc={acc:.4f} | Recall={rec:.4f} | F1={f1:.4f}")
 
     return scores, model
+
+# extract the learning rate, beta_1, and beta_2 from the model name
+def extract_params_Adam(model_name):
+    parts = model_name.split('_')
+    learning_rate = float(parts[2])
+    beta_1 = float(parts[4])
+    beta_2 = float(parts[6][:-4])
+    return learning_rate, beta_1, beta_2

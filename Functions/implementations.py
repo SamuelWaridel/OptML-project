@@ -292,6 +292,51 @@ def train_and_return_evaluation_Adam(model_fn, lr, beta_1, beta_2, train_loader,
             acc, rec, f1 = evaluate_model(model, valid_loader, device)
             print(f"Epoch {epoch} | Acc={acc:.4f} | Recall={rec:.4f} | F1={f1:.4f}")
             scores.append((epoch, acc, rec, f1))
+
+    # Evaluate on the test set after training
+    acc, rec, f1 = evaluate_model(model, test_loader, device)
+    scores.append(("Test", acc, rec, f1))
+    print(f"\nTest Set Evaluation: Acc={acc:.4f} | Recall={rec:.4f} | F1={f1:.4f}")
+
+    return scores, model
+
+def train_and_return_evaluation_Adagrad(model_fn, lr, lr_decay, weight_decay, train_loader, valid_loader, test_loader, device, epochs=100, eval_interval=10):
+    '''
+    Train the model using Adagrad optimizer and return evaluation metrics.
+    
+    Args:
+        model_fn: Function to create the model.
+        lr: Learning rate for Adagrad.
+        train_loader: Training data loader.
+        valid_loader: Validation data loader.
+        test_loader: Test data loader.
+        device: "cuda" or "cpu".
+        epochs: Number of training epochs.
+        eval_interval: Evaluate every `eval_interval` epochs.
+        weight_decay: L2 regularization parameter.
+        scheduler_type: Optional scheduler ("StepLR", "ExponentialLR", etc.).
+        scheduler_kwargs: Dict of kwargs to initialize the scheduler.
+    
+    Returns:
+        scores: List of tuples (epoch, acc, rec, f1).
+        model: Trained model.
+    '''
+
+    #clear_output(wait=True)
+
+    model = model_fn().to(device)
+    optimizer = optim.Adagrad(model.parameters(), lr=lr, lr_decay=lr_decay, weight_decay=weight_decay)
+    criterion = nn.CrossEntropyLoss()
+
+    scores = []
+
+    print(f"\n🔧 Training with Adagrad: lr={lr}, lr_decay={lr_decay}, weight_decay={weight_decay}")
+    for epoch in range(1, epochs + 1):
+        train_one_epoch(model, train_loader, optimizer, criterion, device)
+        if epoch % eval_interval == 0:
+            acc, rec, f1 = evaluate_model(model, valid_loader, device)
+            print(f"Epoch {epoch} | Acc={acc:.4f} | Recall={rec:.4f} | F1={f1:.4f}")
+            scores.append((epoch, acc, rec, f1))
             
     # Evaluate on the test set after training
     acc, rec, f1 = evaluate_model(model, test_loader, device)

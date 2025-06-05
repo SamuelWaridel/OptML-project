@@ -446,43 +446,40 @@ def evaluate_model_on_all_corruptions (model):
         
     return results
 
-def attack_model(model):
+def attack_model(model, num_images = 16):
     fmodel = fb.PyTorchModel(model, bounds=(0, 1))
 
-    # Load 16 images from CIFAR-10
+    # Load images from CIFAR-10
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
 
     dataset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
-    image, label = dataset[0]
-    image = image.unsqueeze(0)  # Add batch dimension
-    label = torch.tensor([label])
     
     images = []
     labels= []
-    for i in range(16):
-        images.append(dataset[i][0].unsqueeze(0))  # Add batch dimension
-        labels.append(torch.tensor([dataset[i][1]]))
+    for i in range(num_images):
+        image, label = dataset[i]
+        images.append(image.unsqueeze(0))  # Add batch dimension
+        labels.append(torch.tensor([label]))
 
+    
     # Run black-box attack
     attack = fb.attacks.BoundaryAttack()
     
-    successes, perturbations = [], []
+    
+    clean_accuracy, robust_accuracy, perturbation_sizes = [], [], []
     
     for i in tqdm(range(len(images)), desc="Running Boundary Attack"):
         image = images[i]
         label = labels[i]
         
+        clean_accuracy.append(fb.accuracy(fmodel, image, label))
+        
         # Run the attack
         raw_advs, clipped_advs, success = attack(fmodel, image, label, epsilons=None)
         # Collect metrics
-        successes.append(success.cpu())
-        perturbations.append((clipped_advs - image).view(image.size(0), -1).norm(dim=1).cpu())
-        # Aggregate and report
-        if successes:
-            success_rate = torch.cat(successes).float().mean().item()
-            avg_perturbation = torch.cat(perturbations).mean().item()
-        else : 
-            success_rate, avg_perturbation = None, None
-    return success_rate, avg_perturbation
+        robust_accuracy.append(1 - success.numpy().mean(axis=-1)) # Calculate robust accuracy which is the accuracy of the model when it is attacked
+        perturbation_sizes.append((clipped_advs - image).norm().numpy().mean(axis = -1))
+        
+    return np.mean(clean_accuracy), np.mean(robust_accuracy), np.mean(perturbation_sizes)

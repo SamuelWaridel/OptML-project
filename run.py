@@ -83,12 +83,12 @@ if user_choice == 'yes':
             print(f"Running black box attack on {model_name} with {optimizer} optimizer...")
             # Define the path to save the results
             if not os.path.exists(os.path.dirname(csv_path)):
-                columns = ["optimizer", "model", "success_rate","avg_perturbations"]
+                columns = ["optimizer", "model", "mean_clean_accuracy", "mean_robutst_accuracy","avg_perturbations"]
                 pd.DataFrame(columns=columns).to_csv(csv_path, index=False)
                 os.makedirs(os.path.dirname(csv_path))
             
             # Run the attack and save the results
-            results =  attack_model(model)
+            results =  attack_model(model, 1)
             # Save the results to a CSV file
             df = pd.DataFrame([optimizer] + [model_name] + list(results)).T
             df.to_csv(csv_path, mode='a', header=False, index=False)

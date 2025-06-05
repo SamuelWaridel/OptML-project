@@ -20,6 +20,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from sklearn.metrics import accuracy_score, recall_score, f1_score
 from Functions.implementations import *
 from Functions.visualization import *
+from IPython.display import clear_output
 from tqdm import tqdm
 import os
 
@@ -27,35 +28,45 @@ import os
 # Set random seeds for reproducibility
 set_seed(42) # Set seed through custom function as done throughtout the project
 
-# Load the best performing models
-Adam_best_models = ["VGG_lr_0.0005_beta1_0.9_beta2_0.98.pth", 'resnet_lr_0.001_beta1_0.8_beta2_0.999.pth', 'densenet_lr_0.001_beta1_0.8_beta2_0.9999.pth']
-
-best_models_dir = os.path.join(os.getcwd(), os.path.join("Results","Best_models"))
-
-adam_models = {}
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-for model_name in Adam_best_models:
-    model_path = os.path.join(best_models_dir, model_name)
-    if os.path.exists(model_path):
-        parts = model_name.split('_')
-        if 'VGG' in parts[0]:
-            model = VGGLike().to(device) # for vgg models
-        elif 'resnet' in parts[0]:
-            model = get_resnet18_cifar().to(device)
-        elif 'densenet' in parts[0]:
-            model = get_densenet121().to(device) # for densenet models
-        else:
-            print(f"Unknown model type in {model_name}. Skipping.")
-            continue
-        model.load_state_dict(torch.load(model_path, map_location=device))
-        adam_models[parts[0]] = model
+# Ask the user if they want to run the model analysis, or just load the results
+while True:
+    choice = input("Do you want to load the model and evaluate them on the corrupted images (yes/no)? (if no, only the results will be loaded and displayed)").strip().lower()
+    if choice in ['yes', 'no']:
+        user_choice =  choice
+        break
     else:
-        print(f"Model {model_name} not found in {best_models_dir}")
+        print("Invalid input. Please enter 'yes' or 'no'.")
 
-# Print loaded models
-print("Loaded models:")
-for model_name, model in adam_models.items():
-    print(f"{model_name}: {model}")
+if user_choice == 'yes':
+    # Run the model evaluation
+    print("Loading models...")
+    # Load the best performing models
+    SGD_best_models = []
+    Adam_best_models = ["VGG_lr_0.0005_beta1_0.9_beta2_0.98.pth", 'resnet_lr_0.001_beta1_0.8_beta2_0.999.pth', 'densenet_lr_0.001_beta1_0.8_beta2_0.9999.pth']
+    Adagrad_best_models = []
+
+    best_models_dir = os.path.join(os.getcwd(), os.path.join("Results","Best_models"))
+
+    sgd_models = get_best_models(SGD_best_models, best_models_dir)
+    adam_models = get_best_models(Adam_best_models, best_models_dir)
+    adagrad_models = get_best_models(Adagrad_best_models, best_models_dir)
+
+    list_of_optimizer_dicts = [sgd_models, adam_models, adagrad_models] # Combine the models into a list of dictionaries for easier iteration
+    
+    
+    print("Running model evaluation...")
+    # Evaluate the models on all corruptions (takes a long time on CPU)
+    print("Evaluating models on all corruption types:")
+    for i in range(3):
+        optimizer = ["SGD", "Adam", "Adagrad"][i]
+        model_dict = list_of_optimizer_dicts[i]
+        print(f"Evaluating {optimizer} models...")
+        for model_name, model in model_dict.items():
+            results = evaluate_model_on_all_corruptions(model)
+            df = pd.DataFrame(results)
+            csv_path = os.path.join(os.path.join(best_models_dir, "Corruption evaluation"), f"{optimizer}_" + model_name +'.csv')
+            df.to_csv(csv_path, index=False)
+        clear_output(wait=True)
+else:
+    print("Skipping model evaluation. Loading results...")
+

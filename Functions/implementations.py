@@ -12,10 +12,14 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
+from torchvision.datasets import CIFAR10
+from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import accuracy_score, recall_score, f1_score
 from IPython.display import clear_output
 import torchvision.models as models
 import random
+from tqdm import tqdm
+import os
 
 class SimpleCNN(nn.Module):
     '''A simple CNN model for CIFAR-10 classification.'''
@@ -303,3 +307,90 @@ def extract_params_Adam(model_name):
     beta_1 = float(parts[4])
     beta_2 = float(parts[6][:-4])
     return learning_rate, beta_1, beta_2
+
+def get_best_models(list_best_models, best_models_dir):
+    """
+    Function to retrieve the best models from a given list.
+    
+    Args:
+        list_best_models (list): List of model names to retrieve.
+    
+    Returns:
+        dict: Dictionary containing the loaded models.
+    """
+    best_models = {}
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    for model_name in list_best_models:
+        model_path = os.path.join(best_models_dir, model_name)
+        if os.path.exists(model_path):
+            parts = model_name.split('_')
+            if 'VGG' in parts[0]:
+                model = VGGLike().to(device)  # for vgg models
+            elif 'resnet' in parts[0]:
+                model = get_resnet18_cifar().to(device)
+            elif 'densenet' in parts[0]:
+                model = get_densenet121().to(device)  # for densenet models
+            else:
+                print(f"Unknown model type in {model_name}. Skipping.")
+                continue
+            model.load_state_dict(torch.load(model_path, map_location=device))
+            best_models[parts[0]] = model
+        else:
+            print(f"Model {model_name} not found in {best_models_dir}")
+    return best_models
+
+def evaluate_model_on_corruption(corruption_type, severity, model):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    drive_base_path = os.getcwd()#'/content/drive/MyDrive/OptiML/repo'
+    cifar10_c_path = os.path.join(drive_base_path, 'data/CIFAR-10-C')
+    corruption_file = os.path.join(cifar10_c_path, f"{corruption_type}.npy")
+    test_set = CIFAR10(root='./data', train=False, download=True)
+    true_labels = torch.tensor(test_set.targets)  # Should have 10,000 labels
+    
+    
+    data = np.load(corruption_file)[(severity - 1) * 10000: severity * 10000]
+    data = torch.tensor(data).permute(0, 3, 1, 2).float() / 255.0  # Normalize to [0,1]
+    mean = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+    std = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+
+    data = (data - mean) / std
+
+    dataset = TensorDataset(data, true_labels)
+    loader = DataLoader(dataset, batch_size=128, shuffle=False)
+
+    all_preds = []
+    all_labels = []
+
+    with torch.no_grad():
+        for images, labels in loader:
+            images = images.to(device)
+            outputs = model(images)
+            _, predicted = outputs.max(1)
+
+            all_preds.extend(predicted.cpu().numpy())
+            all_labels.extend(labels.numpy())
+
+    f1 = f1_score(all_labels, all_preds, average='macro')  # You can also use 'weighted' if you prefer
+    return f1
+
+def evaluate_model_on_all_corruptions (model):
+  
+  corruptions = [
+      "gaussian_noise", "shot_noise", "impulse_noise",
+      "defocus_blur", "glass_blur", "motion_blur", "zoom_blur",
+      "snow", "frost", "fog", "brightness",
+      "contrast", "elastic_transform", "pixelate", "jpeg_compression"
+  ]
+
+  results = []
+
+  for corruption in tqdm(corruptions):
+      for severity in range(1, 6):
+          f1 = evaluate_model_on_corruption(corruption, severity, model)
+          results.append({
+            'corruption': corruption,
+            'severity': severity,
+            'f1_macro': f1
+          })
+    
+  return results

@@ -369,22 +369,23 @@ def get_best_models(list_best_models, best_models_dir):
         model_path = os.path.join(best_models_dir, model_name)
         if os.path.exists(model_path):
             parts = model_name.split('_')
-            if 'VGG' in parts[0]:
+            if 'VGG' in parts[1]:
                 model = VGGLike().to(device)  # for vgg models
-            elif 'resnet' in parts[0]:
+            elif 'ResNet' in parts[1]:
                 model = get_resnet18_cifar().to(device)
-            elif 'densenet' in parts[0]:
+            elif 'DenseNet' in parts[1]:
                 model = get_densenet121().to(device)  # for densenet models
             else:
                 print(f"Unknown model type in {model_name}. Skipping.")
                 continue
             model.load_state_dict(torch.load(model_path, map_location=device))
-            best_models[parts[0]] = model
+            best_models[parts[1]] = model
         else:
             print(f"Model {model_name} not found in {best_models_dir}")
     return best_models
 
 def evaluate_model_on_corruption(corruption_type, severity, model):
+    set_seed(42)  # Set seed for reproducibility
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     drive_base_path = os.getcwd()#'/content/drive/MyDrive/OptiML/repo'
     cifar10_c_path = os.path.join(drive_base_path, 'data/CIFAR-10-C')
@@ -419,23 +420,23 @@ def evaluate_model_on_corruption(corruption_type, severity, model):
     return f1
 
 def evaluate_model_on_all_corruptions (model):
-  
-  corruptions = [
-      "gaussian_noise", "shot_noise", "impulse_noise",
-      "defocus_blur", "glass_blur", "motion_blur", "zoom_blur",
-      "snow", "frost", "fog", "brightness",
-      "contrast", "elastic_transform", "pixelate", "jpeg_compression"
-  ]
+    set_seed(42)  # Set seed for reproducibility
+    corruptions = [
+        "gaussian_noise", "shot_noise", "impulse_noise",
+        "defocus_blur", "glass_blur", "motion_blur", "zoom_blur",
+        "snow", "frost", "fog", "brightness",
+        "contrast", "elastic_transform", "pixelate", "jpeg_compression"
+    ]
 
-  results = []
+    results = []
 
-  for corruption in tqdm(corruptions):
-      for severity in range(1, 6):
-          f1 = evaluate_model_on_corruption(corruption, severity, model)
-          results.append({
-            'corruption': corruption,
-            'severity': severity,
-            'f1_macro': f1
-          })
-    
-  return results
+    for corruption in tqdm(corruptions):
+        for severity in range(1, 6):
+            f1 = evaluate_model_on_corruption(corruption, severity, model)
+            results.append({
+                'corruption': corruption,
+                'severity': severity,
+                'f1_macro': f1
+            })
+        
+    return results

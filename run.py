@@ -64,9 +64,32 @@ if user_choice == 'yes':
         for model_name, model in model_dict.items():
             results = evaluate_model_on_all_corruptions(model)
             df = pd.DataFrame(results)
-            csv_path = os.path.join(os.path.join(best_models_dir, "Corruption evaluation"), model_name + f"_{optimizer}" +  +'.csv')
+            csv_path = os.path.join(os.path.join(best_models_dir, "Corruption evaluation"), model_name + f"_{optimizer}" +'.csv')
             df.to_csv(csv_path, index=False)
         clear_output(wait=True)
+        
+        
+    print("Model evaluation completed. Results saved in the 'Corruption evaluation' folder.")
+    print("Starting Black Box Attacks...")
+    
+    csv_path = os.path.join(os.path.join(best_models_dir, "BlackBoxAttack.csv"))
+
+    for optimizer in ["SGD", "Adam", "Adagrad"]:
+        for model_name, model in model_dict.items():
+            print(f"Running black box attack on {model_name} with {optimizer} optimizer...")
+            # Define the path to save the results
+            if not os.path.exists(os.path.dirname(csv_path)):
+                columns = ["optimizer", "model", "success_rate","avg_perturbations"]
+                pd.DataFrame(columns=columns).to_csv(csv_path, index=False)
+                os.makedirs(os.path.dirname(csv_path))
+            
+            # Run the attack and save the results
+            results = attack_model(model)
+            df = pd.DataFrame([optimizer] + [model_name] + list(results)).T
+            df.to_csv(csv_path, mode='a', header=False, index=False)
+            clear_output(wait=True)
+
+
 else:
     print("Skipping model evaluation. Loading results...")
 

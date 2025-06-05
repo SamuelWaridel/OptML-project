@@ -18,6 +18,8 @@ from sklearn.metrics import accuracy_score, recall_score, f1_score
 from IPython.display import clear_output
 import torchvision.models as models
 import random
+import foolbox as fb
+from foolbox.attacks import BoundaryAttack
 from tqdm import tqdm
 import os
 
@@ -440,3 +442,48 @@ def evaluate_model_on_all_corruptions (model):
             })
         
     return results
+
+def attack_model(model):
+    fmodel = fb.PyTorchModel(model, bounds=(0, 1))
+
+    # Load 16 images from CIFAR-10
+    transform = transforms.Compose([
+        transforms.ToTensor()
+    ])
+
+    dataset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+    image, label = dataset[0]
+    image = image.unsqueeze(0)  # Add batch dimension
+    label = torch.tensor([label])
+    
+    images = []
+    labels= []
+    for i in range(16):
+        images.append(dataset[i][0].unsqueeze(0))  # Add batch dimension
+        labels.append(torch.tensor([dataset[i][1]]))
+
+    # Run black-box attack
+    attack = BoundaryAttack()
+    
+    successes, perturbations = [], []
+    
+    for i in tqdm(range(len(images)), desc="Running Boundary Attack"):
+        image = images[i]
+        label = labels[i]
+        
+        # Ensure the image is in the correct format for foolbox
+        if isinstance(image, torch.Tensor):
+            image = image.numpy()
+        
+        # Run the attack
+        raw_advs, clipped_advs, success = attack(fmodel, images, labels, epsilons=None)
+        # Collect metrics
+        successes.append(success.cpu())
+        perturbations.append((clipped_advs - images).view(images.size(0), -1).norm(dim=1).cpu())
+        # Aggregate and report
+        if successes:
+            success_rate = torch.cat(successes).float().mean().item()
+            avg_perturbation = torch.cat(perturbations).mean().item()
+        else : 
+            success_rate, avg_perturbation = None, None
+    return success_rate, avg_perturbation

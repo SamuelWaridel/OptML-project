@@ -373,10 +373,13 @@ def get_best_models(list_best_models, best_models_dir):
             parts = model_name.split('_')
             if 'VGG' in parts[1]:
                 model = VGGLike().to(device)  # for vgg models
+                model.eval()
             elif 'ResNet' in parts[1]:
                 model = get_resnet18_cifar().to(device)
+                model.eval()
             elif 'DenseNet' in parts[1]:
                 model = get_densenet121().to(device)  # for densenet models
+                model.eval()
             else:
                 print(f"Unknown model type in {model_name}. Skipping.")
                 continue
@@ -463,7 +466,7 @@ def attack_model(model):
         labels.append(torch.tensor([dataset[i][1]]))
 
     # Run black-box attack
-    attack = BoundaryAttack()
+    attack = fb.attacks.BoundaryAttack()
     
     successes, perturbations = [], []
     
@@ -471,15 +474,11 @@ def attack_model(model):
         image = images[i]
         label = labels[i]
         
-        # Ensure the image is in the correct format for foolbox
-        if isinstance(image, torch.Tensor):
-            image = image.numpy()
-        
         # Run the attack
-        raw_advs, clipped_advs, success = attack(fmodel, images, labels, epsilons=None)
+        raw_advs, clipped_advs, success = attack(fmodel, image, label, epsilons=None)
         # Collect metrics
         successes.append(success.cpu())
-        perturbations.append((clipped_advs - images).view(images.size(0), -1).norm(dim=1).cpu())
+        perturbations.append((clipped_advs - image).view(image.size(0), -1).norm(dim=1).cpu())
         # Aggregate and report
         if successes:
             success_rate = torch.cat(successes).float().mean().item()

@@ -50,6 +50,8 @@ if user_choice == 'yes':
     sgd_models = get_best_models(SGD_best_models, best_models_dir)
     adam_models = get_best_models(Adam_best_models, best_models_dir)
     adagrad_models = get_best_models(Adagrad_best_models, best_models_dir)
+    
+    set_seed(42)  # Reset seed to ensure reproducibility after loading models
 
     list_of_optimizer_dicts = [sgd_models, adam_models, adagrad_models] # Combine the models into a list of dictionaries for easier iteration
     
@@ -74,7 +76,9 @@ if user_choice == 'yes':
     
     csv_path = os.path.join(os.path.join(best_models_dir, "BlackBoxAttack.csv"))
 
-    for optimizer in ["SGD", "Adam", "Adagrad"]:
+    for i in range(3):
+        optimizer = ["SGD", "Adam", "Adagrad"][i]
+        model_dict = list_of_optimizer_dicts[i]
         for model_name, model in model_dict.items():
             print(f"Running black box attack on {model_name} with {optimizer} optimizer...")
             # Define the path to save the results
@@ -84,7 +88,8 @@ if user_choice == 'yes':
                 os.makedirs(os.path.dirname(csv_path))
             
             # Run the attack and save the results
-            results = attack_model(model)
+            results =  attack_model(model)
+            # Save the results to a CSV file
             df = pd.DataFrame([optimizer] + [model_name] + list(results)).T
             df.to_csv(csv_path, mode='a', header=False, index=False)
             clear_output(wait=True)

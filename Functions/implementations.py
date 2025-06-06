@@ -460,7 +460,7 @@ def attack_model(model, device, batch_size=1):
     perturbation_sizes = []
     
     for i in tqdm(range(batch_size)):
-        image, label = dataset[0]
+        image, label = dataset[i]
         image = image.unsqueeze(0).to(device)  # Add batch dimension
         label = torch.tensor([label]).to(device)
 

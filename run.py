@@ -68,7 +68,7 @@ if user_choice == 'yes':
         for model_name, model in model_dict.items():
             results = evaluate_model_on_all_corruptions(model)
             df = pd.DataFrame(results)
-            csv_path = os.path.join(os.path.join(best_models_dir, "Corruption evaluation"), f"_{optimizer}" + model_name + '.csv')
+            csv_path = os.path.join(os.path.join(best_models_dir, "Corruption evaluation"), f"{optimizer}_" + model_name + '.csv')
             df.to_csv(csv_path, index=False)
         clear_output(wait=True)
         
@@ -90,7 +90,7 @@ if user_choice == 'yes':
                 os.makedirs(os.path.dirname(csv_path))
             
             # Run the attack and save the results
-            results = attack_model(model, device)
+            results = attack_model(model, device, 3)
             # Save the results to a CSV file
             df = pd.DataFrame([optimizer] + [model_name] + list(results)).T
             df.to_csv(csv_path, mode='a', header=False, index=False)

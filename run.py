@@ -30,6 +30,8 @@ set_seed(42) # Set seed through custom function as done throughtout the project
 
 best_models_dir = os.path.join(os.getcwd(), os.path.join("Results","Best_models"))
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # Ask the user if they want to run the model analysis, or just load the results
 while True:
     choice = input("Do you want to load the model and evaluate them on the corrupted images (yes/no)? (if no, only the results will be loaded and displayed)").strip().lower()
@@ -45,11 +47,11 @@ if user_choice == 'yes':
     # Load the best performing models
     SGD_best_models = ["SGD_VGG_Transform_lr_0.001_momentum_0.99.pth", "SGD_ResNet_Transform_lr_0.05_momentum_0.9.pth", "SGD_DenseNet_Transform_lr_0.01_momentum_0.99.pth"]
     Adam_best_models = ["ADAM_VGG_lr_0.0005_beta1_0.9_beta2_0.98.pth", 'ADAM_ResNet_lr_0.001_beta1_0.8_beta2_0.999.pth', 'ADAM_DenseNet_lr_0.001_beta1_0.8_beta2_0.9999.pth']
-    Adagrad_best_models = []
+    Adagrad_best_models = ["Adagrad_VGG_lr_0.005_wd_0.0_decay_0.0.pth", "Adagrad_ResNet_lr_0.1_wd_0.001_decay_0.0.pth", "Adagrad_DenseNet_lr_0.01_wd_0.0_decay_0.0.pth"]
 
-    sgd_models = get_best_models(SGD_best_models, best_models_dir)
-    adam_models = get_best_models(Adam_best_models, best_models_dir)
-    adagrad_models = get_best_models(Adagrad_best_models, best_models_dir)
+    sgd_models = get_best_models(SGD_best_models, best_models_dir, device)
+    adam_models = get_best_models(Adam_best_models, best_models_dir, device)
+    adagrad_models = get_best_models(Adagrad_best_models, best_models_dir, device)
     
     set_seed(42)  # Reset seed to ensure reproducibility after loading models
 
@@ -66,7 +68,7 @@ if user_choice == 'yes':
         for model_name, model in model_dict.items():
             results = evaluate_model_on_all_corruptions(model)
             df = pd.DataFrame(results)
-            csv_path = os.path.join(os.path.join(best_models_dir, "Corruption evaluation"), model_name + f"_{optimizer}" +'.csv')
+            csv_path = os.path.join(os.path.join(best_models_dir, "Corruption evaluation"), f"_{optimizer}" + model_name + '.csv')
             df.to_csv(csv_path, index=False)
         clear_output(wait=True)
         
@@ -84,11 +86,11 @@ if user_choice == 'yes':
             # Define the path to save the results
             if not os.path.exists(os.path.dirname(csv_path)):
                 columns = ["optimizer", "model", "mean_clean_accuracy", "mean_robutst_accuracy","avg_perturbations"]
-                pd.DataFrame(columns=columns).to_csv(csv_path, index=False)
+                pd.DataFrame(columns=columns).to_csv(csv_path, header=False, index=False)
                 os.makedirs(os.path.dirname(csv_path))
             
             # Run the attack and save the results
-            results =  attack_model(model, 1)
+            results = attack_model(model, device)
             # Save the results to a CSV file
             df = pd.DataFrame([optimizer] + [model_name] + list(results)).T
             df.to_csv(csv_path, mode='a', header=False, index=False)

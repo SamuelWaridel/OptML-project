@@ -355,7 +355,7 @@ def extract_params_Adam(model_name):
     beta_2 = float(parts[6][:-4])
     return learning_rate, beta_1, beta_2
 
-def get_best_models(list_best_models, best_models_dir):
+def get_best_models(list_best_models, best_models_dir, device):
     """
     Function to retrieve the best models from a given list.
     
@@ -366,7 +366,6 @@ def get_best_models(list_best_models, best_models_dir):
         dict: Dictionary containing the loaded models.
     """
     best_models = {}
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     for model_name in list_best_models:
         model_path = os.path.join(best_models_dir, model_name)
         if os.path.exists(model_path):
@@ -446,7 +445,7 @@ def evaluate_model_on_all_corruptions (model):
         
     return results
 
-def attack_model(model, num_images = 16):
+def attack_model(model, device, batch_size=1):
     fmodel = fb.PyTorchModel(model, bounds=(0, 1))
 
     # Load images from CIFAR-10
@@ -456,30 +455,31 @@ def attack_model(model, num_images = 16):
 
     dataset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
     
-    images = []
-    labels= []
-    for i in range(num_images):
-        image, label = dataset[i]
-        images.append(image.unsqueeze(0))  # Add batch dimension
-        labels.append(torch.tensor([label]))
+    clean_accuracies = []
+    robust_accuracies = []
+    perturbation_sizes = []
+    
+    for i in tqdm(range(batch_size)):
+        image, label = dataset[0]
+        image = image.unsqueeze(0).to(device)  # Add batch dimension
+        label = torch.tensor([label]).to(device)
 
-    
-    # Run black-box attack
-    attack = fb.attacks.BoundaryAttack()
-    
-    
-    clean_accuracy, robust_accuracy, perturbation_sizes = [], [], []
-    
-    for i in tqdm(range(len(images)), desc="Running Boundary Attack"):
-        image = images[i]
-        label = labels[i]
+        # Run black-box attack
+        attack = fb.attacks.BoundaryAttack()
         
-        clean_accuracy.append(fb.accuracy(fmodel, image, label))
+        clean_accuracy = fb.accuracy(fmodel, image, label)
         
-        # Run the attack
-        raw_advs, clipped_advs, success = attack(fmodel, image, label, epsilons=None)
-        # Collect metrics
-        robust_accuracy.append(1 - success.numpy().mean(axis=-1)) # Calculate robust accuracy which is the accuracy of the model when it is attacked
-        perturbation_sizes.append((clipped_advs - image).norm().numpy().mean(axis = -1))
+        if clean_accuracy == 0.0:
+            print("Model is not accurate on the clean image. Skipping attack.")
+            clean_accuracies.append(0.0)
+            robust_accuracies.append(0.0) # Calculate robust accuracy which is the accuracy of the model when it is attacked
+            perturbation_sizes.append(0.0)
+        else :
+            # Run the attack
+            raw_advs, clipped_advs, success = attack(fmodel, image, label, epsilons=None)
+            # Collect metrics
+            clean_accuracies.append(clean_accuracy)
+            robust_accuracies.append(1 - success.cpu().numpy().mean()) # Calculate robust accuracy which is the accuracy of the model when it is attacked
+            perturbation_sizes.append((clipped_advs - image).norm().cpu().numpy().mean())
         
-    return np.mean(clean_accuracy), np.mean(robust_accuracy), np.mean(perturbation_sizes)
+    return np.mean(clean_accuracies), np.mean(robust_accuracies), np.mean(perturbation_sizes)

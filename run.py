@@ -46,7 +46,7 @@ if user_choice == 'yes':
     print("Loading models...")
     # Load the best performing models
     SGD_best_models = ["SGD_VGG_Transform_lr_0.001_momentum_0.99.pth", "SGD_ResNet_Transform_lr_0.05_momentum_0.9.pth", "SGD_DenseNet_Transform_lr_0.01_momentum_0.99.pth"]
-    Adam_best_models = ["ADAM_VGG_lr_0.0005_beta1_0.9_beta2_0.98.pth", 'ADAM_ResNet_lr_0.001_beta1_0.8_beta2_0.999.pth', 'ADAM_DenseNet_lr_0.001_beta1_0.8_beta2_0.9999.pth']
+    Adam_best_models = ["Adam_VGG_lr_0.0005_beta1_0.8_beta2_0.999.pth", 'Adam_ResNet_lr_0.001_beta1_0.9_beta2_0.999.pth', 'Adam_DenseNet_lr_0.0005_beta1_0.95_beta2_0.9999.pth']
     Adagrad_best_models = ["Adagrad_VGG_lr_0.005_wd_0.0_decay_0.0.pth", "Adagrad_ResNet_lr_0.1_wd_0.001_decay_0.0.pth", "Adagrad_DenseNet_lr_0.01_wd_0.0_decay_0.0.pth"]
 
     sgd_models = get_best_models(SGD_best_models, best_models_dir, device)
@@ -77,18 +77,14 @@ if user_choice == 'yes':
     print("Starting Black Box Attacks...")
     
     csv_path = os.path.join(os.path.join(best_models_dir, "BlackBoxAttack.csv"))
+    columns = ["optimizer", "model", "mean_clean_accuracy", "mean_robutst_accuracy","avg_perturbations"]
+    pd.DataFrame(columns=columns).to_csv(csv_path, index=False)
 
     for i in range(3):
         optimizer = ["SGD", "Adam", "Adagrad"][i]
         model_dict = list_of_optimizer_dicts[i]
         for model_name, model in model_dict.items():
-            print(f"Running black box attack on {model_name} with {optimizer} optimizer...")
-            # Define the path to save the results
-            if not os.path.exists(os.path.dirname(csv_path)):
-                columns = ["optimizer", "model", "mean_clean_accuracy", "mean_robutst_accuracy","avg_perturbations"]
-                pd.DataFrame(columns=columns).to_csv(csv_path, header=False, index=False)
-                os.makedirs(os.path.dirname(csv_path))
-            
+            print(f"Running black box attack on {model_name} with {optimizer} optimizer...")            
             # Run the attack and save the results
             results = attack_model(model, device, 3)
             # Save the results to a CSV file

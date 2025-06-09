@@ -446,6 +446,9 @@ def evaluate_model_on_all_corruptions (model):
     return results
 
 def attack_model(model, device, batch_size=1):
+    
+    set_seed(42) # Set seed for reproducibility
+    
     fmodel = fb.PyTorchModel(model, bounds=(0, 1))
 
     # Load images from CIFAR-10
@@ -455,11 +458,16 @@ def attack_model(model, device, batch_size=1):
 
     dataset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
     
+    # Create a random sampler for the desired batch size
+    indices = np.arange(len(dataset))
+    np.random.shuffle(indices)  # Shuffle with the set seed
+    sampled_indices = indices[:batch_size]
+    
     clean_accuracies = []
     robust_accuracies = []
     perturbation_sizes = []
     
-    for i in tqdm(range(batch_size)):
+    for i in tqdm(sampled_indices):
         image, label = dataset[i]
         image = image.unsqueeze(0).to(device)  # Add batch dimension
         label = torch.tensor([label]).to(device)
@@ -482,4 +490,4 @@ def attack_model(model, device, batch_size=1):
             robust_accuracies.append(1 - success.cpu().numpy().mean()) # Calculate robust accuracy which is the accuracy of the model when it is attacked
             perturbation_sizes.append((clipped_advs - image).norm().cpu().numpy().mean())
         
-    return np.mean(clean_accuracies), np.mean(robust_accuracies), np.mean(perturbation_sizes)
+    return np.mean(clean_accuracies), np.mean(robust_accuracies), np.mean(perturbation_sizes), np.std(clean_accuracies), np.std(robust_accuracies), np.std(perturbation_sizes)

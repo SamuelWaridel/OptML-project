@@ -77,7 +77,7 @@ if user_choice == 'yes':
     print("Starting Black Box Attacks...")
     
     csv_path = os.path.join(os.path.join(best_models_dir, "BlackBoxAttack.csv"))
-    columns = ["optimizer", "model", "mean_clean_accuracy", "mean_robutst_accuracy","avg_perturbations"]
+    columns = ["optimizer", "model", "mean_clean_accuracy", "mean_robust_accuracy","avg_perturbations", "std_clean_accuracy", "std_robust_accuracy", "std_perturbations"]
     pd.DataFrame(columns=columns).to_csv(csv_path, index=False)
 
     for i in range(3):

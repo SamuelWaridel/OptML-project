@@ -545,3 +545,42 @@ def attack_model(model, device, batch_size=1):
             perturbation_sizes.append((clipped_advs - image).norm().cpu().numpy().mean())
         
     return np.mean(clean_accuracies), np.mean(robust_accuracies), np.mean(perturbation_sizes), np.std(clean_accuracies), np.std(robust_accuracies), np.std(perturbation_sizes)
+
+
+def evaluate_on_clean_testset(model):
+    """
+    Evaluate the model on the clean CIFAR-10 test set.
+    Args:
+        model: The model to evaluate.
+    Returns:
+        f1 (float): The F1 score of the model on the clean test set.
+    """
+    set_seed(42)  # Set seed for reproducibility
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Set device to GPU if available, otherwise CPU
+    
+    # Load the CIFAR-10 test set
+    # Apply the same normalization as used during training
+    transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.4914, 0.4822, 0.4465],
+                         std=[0.2023, 0.1994, 0.2010])
+    ])
+    test_dataset = CIFAR10(root='./data', train=False, download=True, transform=transform)
+    test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+
+    # Initialize lists to store predictions and labels
+    all_preds = []
+    all_labels = []
+
+    model.eval() # Set the model to evaluation mode
+    with torch.no_grad(): # Disable gradient calculation for evaluation
+        for images, labels in test_loader: # Iterate over the test DataLoader
+            images = images.to(device)
+            outputs = model(images)
+            _, predicted = outputs.max(1)
+
+            all_preds.extend(predicted.cpu().numpy())
+            all_labels.extend(labels.numpy())
+
+    f1 = f1_score(all_labels, all_preds, average='macro') # Calculate the F1 score using macro averaging
+    return f1

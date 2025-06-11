@@ -1,4 +1,5 @@
-# .py file for different functions used in then notebook
+"""This module contains various functions for training, evaluating, and attacking models on the CIFAR-10 dataset.
+It includes functions for model definition, data loading, training, evaluation, and black-box attacks using Foolbox."""
 
 import numpy as np
 import matplotlib.pyplot as plt

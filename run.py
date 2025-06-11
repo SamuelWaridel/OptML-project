@@ -12,27 +12,17 @@ The script also provides various visualizations of the results, including bar pl
 
 # Import necessary libraries
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
-import sklearn
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from torch.utils.data.sampler import SubsetRandomSampler
-from sklearn.metrics import accuracy_score, recall_score, f1_score
 from Functions.implementations import *
 from Functions.visualization import *
 from IPython.display import clear_output
-from tqdm import tqdm
 import os
 
 
 # Set random seeds for reproducibility
 set_seed(42) # Set seed through custom function as done throughtout the project
 
-best_models_dir = os.path.join(os.getcwd(), os.path.join("Results","Best_models"))
+best_models_dir = os.path.join(os.getcwd(), "Best_models") # Directory where the best models and the relevant data is saved
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -55,9 +45,10 @@ if user_choice == 'yes':
     Adagrad_best_models = ["Adagrad_VGG_lr_0.005_wd_0.0_decay_0.0.pth", "Adagrad_ResNet_lr_0.1_wd_0.001_decay_0.0.pth", "Adagrad_DenseNet_lr_0.01_wd_0.0_decay_0.0.pth"]
 
     # Load the best performing models
-    sgd_models = get_best_models(SGD_best_models, best_models_dir, device)
-    adam_models = get_best_models(Adam_best_models, best_models_dir, device)
-    adagrad_models = get_best_models(Adagrad_best_models, best_models_dir, device)
+    models_dir = os.path.join(best_models_dir, "Models") # Directory where the models are saved
+    sgd_models = get_best_models(SGD_best_models, models_dir, device)
+    adam_models = get_best_models(Adam_best_models, models_dir, device)
+    adagrad_models = get_best_models(Adagrad_best_models, models_dir, device)
     
     set_seed(42)  # Reset seed to ensure reproducibility after loading models
 
@@ -110,6 +101,9 @@ folder_path = os.path.join(best_models_dir, "Corruption evaluation")
 if not os.path.exists(folder_path): # Check if the folder exists
     print(f"Folder {folder_path} does not exist. Please run the model evaluation first.")
     exit()
+    
+
+# If the folder exists, load the results
 model_files = sorted([f for f in os.listdir(folder_path) if f.endswith('.csv')]) # Get all CSV files in the folder
 model_names = [os.path.splitext(f)[0] for f in model_files] # Extract model names from the filenames
 
@@ -117,7 +111,7 @@ corruption_list = sorted(list({
     row['corruption']
     for file in model_files
     for _, row in pd.read_csv(os.path.join(folder_path, file)).iterrows()
-})) # Get all unique corruption names from the CSV files
+}))
 
 corruption_to_idx = {name: idx for idx, name in enumerate(corruption_list)} # Create a mapping from corruption names to indices for easier access
 
@@ -138,8 +132,8 @@ for i, file in enumerate(model_files): # Iterate over the model files
 print("Results loaded successfully.")
 
 # Plot the results        
-plot_corruption_barplot_per_model(all_data, model_names)
-plot_corruption_curves(all_data, model_names, corruption_list)
-plot_corruption_barplot_per_corruption_type(all_data, corruption_list)
+plot_corruption_curve(all_data, model_names, n_severities)
 plot_corruption_scatterplot(all_data, model_names)
+plot_corruption_heatmap(all_data, model_names, corruption_list)
+plot_corruption_barplot(all_data, corruption_list)
 

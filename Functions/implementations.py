@@ -406,12 +406,12 @@ def get_best_models(list_best_models, best_models_dir, device):
             print(f"Model {model_name} not found in {best_models_dir}")
     return best_models
 
-def download_cifar10c_folder(download_dir='./data'):
+def download_cifar10c_folder(download_dir='data'):
     """
     Downloads and extracts the entire CIFAR-10-C dataset from Zenodo if not already present.
     
     Args:
-        download_dir (str, optional): The directory where the CIFAR-10-C dataset will be downloaded. Defaults to './data'.
+        download_dir (str, optional): The directory where the CIFAR-10-C dataset will be downloaded. Defaults to 'data'.
     
     Returns:
         str: The path to the downloaded tar file.
@@ -434,17 +434,17 @@ def download_cifar10c_folder(download_dir='./data'):
             raise RuntimeError(f"Failed to download dataset (status code: {response.status_code})")
     return tar_path
 
-def extract_cifar10c_corruption(download_dir='data', tar_path = 'data/CIFAR-10-C.tar'):
+def extract_cifar10c_corruption(tar_path = 'data/CIFAR-10-C.tar'):
     """ Extracts the CIFAR-10-C dataset from the downloaded tar file.
 
     Args:
-        download_dir (str, optional): The file path to which save the downloaded data. Defaults to 'data'.
         tar_path (str, optional): The file path to the downloaded tar file. Defaults to 'data/CIFAR-10-C.tar'.
 
     Returns:
         extract_folder: The path to the extracted CIFAR-10-C dataset folder.
     """
     
+    download_dir = os.path.dirname(tar_path)  # Get the directory where the tar file is located
     extract_folder = os.path.join(download_dir, "CIFAR-10-C")
     
     # Extract the .tar file

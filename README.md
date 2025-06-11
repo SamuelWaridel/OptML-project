@@ -26,6 +26,7 @@ The most important packages are listed as follows:
 - torchvision : 0.21.0
 - foolbox : 3.3.1
 - jupyter : 1.1.1
+- requests : 2.32.3
 
 Less critical packages include: 
 - seaborn : 0.13.2

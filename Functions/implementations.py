@@ -23,6 +23,8 @@ import foolbox as fb
 from foolbox.attacks import BoundaryAttack
 from tqdm import tqdm
 import os
+import requests
+import tarfile
 
 class SimpleCNN(nn.Module):
     '''A simple CNN model for CIFAR-10 classification.'''
@@ -404,6 +406,56 @@ def get_best_models(list_best_models, best_models_dir, device):
             print(f"Model {model_name} not found in {best_models_dir}")
     return best_models
 
+def download_cifar10c_folder(download_dir='./data'):
+    """
+    Downloads and extracts the entire CIFAR-10-C dataset from Zenodo if not already present.
+    
+    Args:
+        download_dir (str, optional): The directory where the CIFAR-10-C dataset will be downloaded. Defaults to './data'.
+    
+    Returns:
+        str: The path to the downloaded tar file.
+    """
+    
+    os.makedirs(download_dir, exist_ok=True)
+    tar_path = os.path.join(download_dir, "CIFAR-10-C.tar")
+
+    # Download the .tar file from the CIFAR-10-C github repository
+    if not os.path.exists(tar_path):
+        url = "https://zenodo.org/record/2535967/files/CIFAR-10-C.tar?download=1"
+        print(f"Downloading CIFAR-10-C dataset from {url} ...")
+        response = requests.get(url, stream=True) # download the file
+        if response.status_code == 200: # check if the request was successful
+            with open(tar_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192): # write the file in chunks
+                    f.write(chunk)
+            print(f"Download complete: {tar_path}")
+        else:
+            raise RuntimeError(f"Failed to download dataset (status code: {response.status_code})")
+    return tar_path
+
+def extract_cifar10c_corruption(download_dir='data', tar_path = 'data/CIFAR-10-C.tar'):
+    """ Extracts the CIFAR-10-C dataset from the downloaded tar file.
+
+    Args:
+        download_dir (str, optional): The file path to which save the downloaded data. Defaults to 'data'.
+        tar_path (str, optional): The file path to the downloaded tar file. Defaults to 'data/CIFAR-10-C.tar'.
+
+    Returns:
+        extract_folder: The path to the extracted CIFAR-10-C dataset folder.
+    """
+    
+    extract_folder = os.path.join(download_dir, "CIFAR-10-C")
+    
+    # Extract the .tar file
+    if not os.path.exists(extract_folder):
+        print(f"Extracting {tar_path} ...")
+        with tarfile.open(tar_path, "r") as tar:
+            tar.extractall(path=download_dir, filter="data")
+        print(f"Extraction complete.")
+
+    return extract_folder
+
 def evaluate_model_on_corruption(corruption_type, severity, model):
     """
     Evaluate the model on a specific corruption type and severity level from CIFAR-10-C dataset.
@@ -421,7 +473,8 @@ def evaluate_model_on_corruption(corruption_type, severity, model):
     
     drive_base_path = os.getcwd() # Get the current working directory, this is used to load the CIFAR-10-C dataset.
     # Construct the path to the CIFAR-10-C dataset
-    cifar10_c_path = os.path.join(drive_base_path, 'data/CIFAR-10-C')
+    
+    cifar10_c_path = os.path.join(drive_base_path, extract_cifar10c_corruption(download_cifar10c_folder("data")))
     corruption_file = os.path.join(cifar10_c_path, f"{corruption_type}.npy") 
     
     test_set = CIFAR10(root='./data', train=False, download=True) # Load the CIFAR-10 test set, which contains 10,000 images and their corresponding labels.
@@ -585,3 +638,21 @@ def evaluate_on_clean_testset(model):
 
     f1 = f1_score(all_labels, all_preds, average='macro') # Calculate the F1 score using macro averaging
     return f1
+
+def download_cifar10c_corruption(corruption_type, download_dir='./data/new_CIFAR-10-C'):
+    """
+    Downloads the specified corruption .npy file from the official CIFAR-10-C repository if not present.
+    """
+    os.makedirs(download_dir, exist_ok=True)
+    corruption_file = os.path.join(download_dir, f"{corruption_type}.npy")
+    if not os.path.exists(corruption_file):
+        url = f"https://zenodo.org/record/2535967/files/CIFAR-10-C.tar?download=1"
+        print(f"Downloading {corruption_type}.npy from {url} ...")
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open(corruption_file, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        else:
+            raise RuntimeError(f"Failed to download {corruption_type}.npy (status code: {response.status_code})")
+    return corruption_file

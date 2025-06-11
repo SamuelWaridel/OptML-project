@@ -69,7 +69,10 @@ if user_choice == 'yes':
     
     
     print("Running model evaluation...")
-    # Evaluate the models on all corruptions (takes a long time on CPU)
+    # Download the corruption dataset if not already downloaded
+    _ = extract_cifar10c_corruption(download_cifar10c_folder("data"))
+    
+    # Evaluate the models on all corruptions       
     print("Evaluating models on all corruption types:")
     for i in range(3): # Iterate over the three optimizers
         optimizer = ["SGD", "Adam", "Adagrad"][i]

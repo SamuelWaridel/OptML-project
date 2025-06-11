@@ -10,6 +10,19 @@ The results are saved in the "Results/Best_models/Corruption evaluation" folder,
 The script also provides various visualizations of the results, including bar plots, curves, and scatter plots.
 """
 
+"""
+# If running on Google Colab, uncomment the following lines to mount the drive and import the necessary packages:
+
+# Mount Google Drive to access the project files
+from google.colab import drive
+drive.mount('/content/drive', force_remount=True)
+
+%cd /content/drive/MyDrive/OptiML # Change to the directory where the project is located
+
+! pip install foolbox==3.3.1 # Might need to install foolbox if not already installed
+"""
+
+
 # Import necessary libraries
 import numpy as np
 import pandas as pd
@@ -28,12 +41,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Ask the user if they want to run the model analysis, or just load the results
 while True:
-    choice = input("Do you want to load the model and evaluate them on the corrupted images (yes/no)? (if no, only the results will be loaded and displayed)").strip().lower()
+    choice = input("Do you want to load the models, evaluate them on the corrupted images, and perform the black box attack on them (yes/no)? (This takes a long time. If no, the already computed results will be loaded and visualized.) ").strip().lower()
     if choice in ['yes', 'no']:
         user_choice =  choice
         break
     else:
-        print("Invalid input. Please enter 'yes' or 'no'.")
+        print("Invalid input. Please enter 'yes' or 'no'. ")
 
 if user_choice == 'yes':
     # Run the model evaluation

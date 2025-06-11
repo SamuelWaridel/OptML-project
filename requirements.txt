@@ -8,7 +8,7 @@ babel @ file:///C:/b/abs_ffzt1bmjth/croot/babel_1737454394148/work
 beautifulsoup4 @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/beautifulsoup4-split_1729039630198/work
 bleach @ file:///C:/Users/dev-admin/buildout/croot/bleach_1732924075369/work
 Brotli @ file:///C:/b/abs_c415aux9ra/croot/brotli-split_1736182803933/work
-certifi @ file:///C:/b/abs_8a944p1_gn/croot/certifi_1738623753421/work/certifi
+certifi @ file:///C:/b/abs_3beajm7umk/croot/certifi_1745939228545/work/certifi
 cffi @ file:///C:/b/abs_29_b57if3f/croot/cffi_1736184144340/work
 charset-normalizer @ file:///croot/charset-normalizer_1721748349566/work
 colorama @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/colorama_1729036581634/work
@@ -18,11 +18,15 @@ cycler @ file:///tmp/build/80754af9/cycler_1637851556182/work
 debugpy @ file:///C:/b/abs_bf9oo2vhxp/croot/debugpy_1736269476451/work
 decorator @ file:///opt/conda/conda-bld/decorator_1643638310831/work
 defusedxml @ file:///tmp/build/80754af9/defusedxml_1615228127516/work
+eagerpy @ file:///home/conda/feedstock_root/build_artifacts/eagerpy_1597663622327/work
 executing @ file:///opt/conda/conda-bld/executing_1646925071911/work
 fastjsonschema @ file:///C:/Users/dev-admin/buildout/croot/python-fastjsonschema_1735843385211/work
 filelock @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/filelock_1729048196920/work
 fonttools @ file:///C:/b/abs_4crkswws2h/croot/fonttools_1737040078745/work
+foolbox @ file:///home/conda/feedstock_root/build_artifacts/foolbox_1619808034564/work
 fsspec @ file:///C:/Users/dev-admin/buildout/croot/fsspec_1739559799693/work
+gitdb @ file:///tmp/build/80754af9/gitdb_1617117951232/work
+GitPython @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/gitpython_1729040708854/work
 gmpy2 @ file:///C:/b/abs_d8ki0o0h97/croot/gmpy2_1738085498525/work
 h11 @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/h11_1729040746371/work
 httpcore @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/httpcore_1729042573997/work
@@ -51,7 +55,7 @@ jupyterlab_server @ file:///C:/Users/dev-admin/buildout/croot/jupyterlab_server_
 jupyterlab_widgets @ file:///C:/Users/dev-admin/buildout/croot/jupyterlab_widgets_1739560423822/work
 kiwisolver @ file:///C:/b/abs_faf90xet7a/croot/kiwisolver_1737040915779/work
 MarkupSafe @ file:///C:/b/abs_a0ma7ge0jc/croot/markupsafe_1738584052792/work
-matplotlib==3.10.1
+matplotlib==3.10.3
 matplotlib-inline @ file:///C:/Users/dev-admin/buildout/croot/matplotlib-inline_1732914206474/work
 mistune @ file:///C:/b/abs_77yql3poyz/croot/mistune_1741124004410/work
 mpmath @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/mpmath_1729048934933/work
@@ -62,11 +66,11 @@ nest_asyncio @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/nes
 networkx @ file:///C:/b/abs_b054htfn9t/croot/networkx_1737043671910/work
 notebook @ file:///C:/Users/dev-admin/buildout/croot/notebook_1742593494485/work
 notebook_shim @ file:///C:/b/abs_9ctyfgpncn/croot/notebook-shim_1741707829491/work
-numpy @ file:///D:/bld/numpy_1742254804988/work/dist/numpy-2.2.4-cp313-cp313-win_amd64.whl#sha256=bf109dc927e3f12000bd0992c55e6276c6e6dbd6e95ca35dd3bddb21975a442b
+numpy @ file:///D:/bld/numpy_1745118932824/work/dist/numpy-2.2.5-cp313-cp313-win_amd64.whl#sha256=70b26fb49b3709b258c01f416229ce76fcfc2d669138e1e1cf7145e874630cf6
 optree @ file:///C:/b/abs_bci6vc6cm2/croot/optree_1742210211336/work
 overrides @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/overrides_1729041221570/work
 packaging @ file:///C:/b/abs_3by6s2fa66/croot/packaging_1734472138782/work
-pandas @ file:///D:/bld/pandas_1726878597308/work
+pandas @ file:///D:/bld/pandas_1744430475950/work
 pandocfilters @ file:///opt/conda/conda-bld/pandocfilters_1643405455980/work
 parso @ file:///C:/b/abs_834b4mj92b/croot/parso_1733963322289/work
 patsy @ file:///C:/b/abs_f9h0eiedk0/croot/patsy_1738159949276/work
@@ -102,6 +106,7 @@ Send2Trash @ file:///C:/b/abs_7e73ol18dl/croot/send2trash_1736542724140/work
 setuptools==75.8.0
 shiboken6==6.8.2
 six @ file:///tmp/build/80754af9/six_1644875935023/work
+smmap @ file:///tmp/build/80754af9/smmap_1611694433573/work
 sniffio @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/sniffio_1729040228331/work
 soupsieve @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/soupsieve_1729039543636/work
 stack-data @ file:///opt/conda/conda-bld/stack_data_1646927590127/work
@@ -113,6 +118,7 @@ tinycss2 @ file:///C:/Users/dev-admin/buildout/croot/tinycss2_1739559171127/work
 torch @ file:///C:/bld/libtorch_1742909039791/work
 torchvision @ file:///C:/bld/bld/rattler-build_torchvision_1742618979/work
 tornado @ file:///C:/Users/dev-admin/buildout/croot/tornado_1735843426044/work
+tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1735661334605/work
 traitlets @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/traitlets_1729038154689/work
 typing_extensions @ file:///C:/b/abs_0ffjxtihug/croot/typing_extensions_1734714875646/work
 tzdata @ file:///croot/python-tzdata_1690578112552/work

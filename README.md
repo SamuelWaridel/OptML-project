@@ -23,7 +23,7 @@ Once loaded, models are then evaluated on the CIFAR-10-C dataset. This dataset c
 
 After that, the models are subjected to black box attacks through. For simplicity and because of the time constraints, only one kind of attack was considered (Boundary Attacks). Images are subsampled from the original dataset, and the model's accuracy is recorded before and after perturbation, as well as a mean perturbation size for each one. The results are placed in the BlackBoxAttack.csv file under Best_models.
 
-Finally, the code loads the computed resutls into a dataframe for plotting and visualization.
+Finally, the code loads the computed results into a dataframe for plotting and visualization.
 
 Even when removing training, the black box attacks take quite some time, therefore the script provides an option to skip the evaluation steps and simply load the pre-computed results.
 
@@ -37,7 +37,7 @@ To use the code, the first thing is to make sure to have the proper dependencies
 
 The main block of code is in the run.py file. When running this script, the user will be first asked if they want to perform the corruption evaluation and black box attack, or skip this step and simply plot the pre-computed results. After answering this question, the program proceeds with the desired process while providing feedback to the user.
 
-If one wishes to have a more hands on view view, we have provided Jupyter notebooks to show in more detail how the code is constructed.
+If one wishes to have a more hands on view, we have provided Jupyter notebooks to show in more detail how the code is constructed.
 
 ### Dependencies and Imports
 
